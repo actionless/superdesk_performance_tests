@@ -1,14 +1,15 @@
 from __future__ import unicode_literals
 
 from base64 import b64encode
+import requests
 
 from locust import HttpLocust, TaskSet, task
 
 HOSTNAME = 'https://master.sd-test.sourcefabric.org/api'
 
 
-def log_in(l):
-    return l.client.post(
+def log_in(client):
+    return client.post(
         HOSTNAME + '/auth/',
         {
             'username': 'admin',
@@ -25,32 +26,40 @@ def request_with_auth(l, method, uri, **kwargs):
         url,
         headers={
             'authorization':
-            b'basic ' + b64encode(l.auth['token'].encode('ascii') + b':'),
-        }
+            b'basic ' + b64encode(auth['token'].encode('ascii') + b':'),
+        },
+        verify=False,
     )
 
 
-class SuperdeskLogIn(TaskSet):
-    tasks = {
-        log_in: 1
-    }
+auth = log_in(requests).json()
+
+
+class SuperdeskAuth(TaskSet):
+
+    @task
+    def log_in_and_out(self):
+        auth = log_in(self.client).json()
+        self.client.delete(
+            HOSTNAME + '/auth/' + auth['_id'],
+            verify=False,
+            name='/api/auth/<id>'
+        )
 
 
 class SuperdeskProfile(TaskSet):
-    def on_start(self):
-        self.auth = log_in(self).json()
 
     @task
     def self_profile(self):
         request_with_auth(
             self, 'GET',
-            '/users/' + self.auth['user'],
+            '/users/' + auth['user'],
         )
 
 
 class SuperdeskTaskSet(TaskSet):
     tasks = {
-        SuperdeskLogIn: 1,
+        SuperdeskAuth: 1,
         SuperdeskProfile: 1,
     }
 
