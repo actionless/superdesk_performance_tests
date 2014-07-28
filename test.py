@@ -7,6 +7,9 @@ from locust import HttpLocust, TaskSet, task
 
 HOSTNAME = 'https://master.sd-test.sourcefabric.org/api'
 
+##############################################################################
+# helpers:
+
 
 def log_in(client):
     return client.post(
@@ -19,20 +22,23 @@ def log_in(client):
     )
 
 
+auth = log_in(requests).json()
+auth_token = b'basic ' + b64encode(auth['token'].encode('ascii') + b':')
+
+
 def request_with_auth(l, method, uri, **kwargs):
     url = HOSTNAME + uri
     return l.client.request(
         method,
         url,
         headers={
-            'authorization':
-            b'basic ' + b64encode(auth['token'].encode('ascii') + b':'),
+            'authorization': auth_token,
         },
         verify=False,
     )
 
-
-auth = log_in(requests).json()
+##############################################################################
+# test itself:
 
 
 class SuperdeskAuth(TaskSet):
@@ -47,20 +53,45 @@ class SuperdeskAuth(TaskSet):
         )
 
 
-class SuperdeskProfile(TaskSet):
+class SuperdeskWorkspace(TaskSet):
 
     @task
     def self_profile(self):
         request_with_auth(
-            self, 'GET',
+            self,
+            'GET',
             '/users/' + auth['user'],
+        )
+
+    @task
+    def list_ingest(self):
+        request_with_auth(
+            self,
+            'GET',
+            '/ingest',
+        )
+
+    @task
+    def filter_ingest(self):
+        request_with_auth(
+            self,
+            'GET',
+            '/ingest?source=%7B%22query%22:%7B%22match_all%22:%7B%7D%7D,%22size%22:10,%22from%22:0%7D',
+        )
+
+    @task
+    def list_notification(self):
+        request_with_auth(
+            self,
+            'GET',
+            '/notification',
         )
 
 
 class SuperdeskTaskSet(TaskSet):
     tasks = {
         SuperdeskAuth: 1,
-        SuperdeskProfile: 1,
+        SuperdeskWorkspace: 1,
     }
 
 
