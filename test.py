@@ -22,8 +22,12 @@ def log_in(client):
     )
 
 
+def encode_token(token):
+    return b'basic ' + b64encode(token.encode('ascii') + b':')
+
+
 auth = log_in(requests).json()
-auth_token = b'basic ' + b64encode(auth['token'].encode('ascii') + b':')
+auth_token = encode_token(auth['token'])
 
 
 def request_with_auth(l, method, uri, **kwargs):
@@ -49,8 +53,7 @@ class SuperdeskAuth(TaskSet):
         self.client.delete(
             HOSTNAME + '/auth/' + test_auth['_id'],
             headers={
-                'authorization': b'basic ' +
-                b64encode(test_auth['token'].encode('ascii') + b':'),
+                'authorization': encode_token(test_auth['token']),
             },
             verify=False,
             name='/api/auth/<id>'
