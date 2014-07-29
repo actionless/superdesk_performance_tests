@@ -45,9 +45,14 @@ class SuperdeskAuth(TaskSet):
 
     @task
     def log_in_and_out(self):
-        auth = log_in(self.client).json()
         self.client.delete(
             HOSTNAME + '/auth/' + auth['_id'],
+            headers={
+                'authorization': b'basic ' +
+                b64encode(
+                    log_in(self.client).json()['token'].encode('ascii') + b':'
+                ),
+            },
             verify=False,
             name='/api/auth/<id>'
         )

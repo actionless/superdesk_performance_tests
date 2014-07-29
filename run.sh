@@ -11,7 +11,7 @@ source ./env/bin/activate
 
 3) Install dependencies:
 pip install -r requirements.txt
-"
+" &&
 exit 127
 
 locust -f test.py --host localhost "$@"
