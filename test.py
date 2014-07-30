@@ -60,6 +60,18 @@ class SuperdeskAuth(TaskSet):
         )
 
 
+class SuperdeskArchive(TaskSet):
+
+    @task
+    def archive_page(self):
+        request_with_auth(
+            self,
+            'GET',
+            '/archive?source={"query":{"match_all":{}},'
+            '"size":25,"from":0,"sort":[{"versioncreated":"desc"}]}',
+        )
+
+
 class SuperdeskWorkspace(TaskSet):
 
     @task
@@ -75,7 +87,8 @@ class SuperdeskWorkspace(TaskSet):
         request_with_auth(
             self,
             'GET',
-            """/activity?embedded={"user":1}&max_results=50&sort=[('_created',-1)]""",
+            '/activity?embedded={"user":1}'
+            "&max_results=50&sort=[('_created',-1)]",
         )
 
     @task
@@ -107,6 +120,7 @@ class SuperdeskTaskSet(TaskSet):
     tasks = {
         SuperdeskAuth: 1,
         SuperdeskWorkspace: 1,
+        SuperdeskArchive: 1,
     }
 
 
