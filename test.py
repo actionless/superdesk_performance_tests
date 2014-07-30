@@ -30,16 +30,19 @@ auth = log_in(requests).json()
 auth_token = encode_token(auth['token'])
 
 
-def request_with_auth(l, method, uri, **kwargs):
-    url = HOSTNAME + uri
-    return l.client.request(
-        method,
-        url,
-        headers={
-            'authorization': auth_token,
-        },
-        verify=False,
-    )
+class TaskSetWithAuth(TaskSet):
+
+    def request_with_auth(self, method, uri, **kwargs):
+        url = HOSTNAME + uri
+        headers = kwargs.pop('headers', {})
+        headers.update({'authorization': auth_token})
+        return self.client.request(
+            method,
+            url,
+            headers=headers,
+            verify=False,
+            **kwargs
+        )
 
 ##############################################################################
 # test itself:
@@ -60,32 +63,29 @@ class SuperdeskAuth(TaskSet):
         )
 
 
-class SuperdeskArchive(TaskSet):
+class SuperdeskArchive(TaskSetWithAuth):
 
     @task
     def archive_page(self):
-        request_with_auth(
-            self,
+        self.request_with_auth(
             'GET',
             '/archive?source={"query":{"match_all":{}},'
             '"size":25,"from":0,"sort":[{"versioncreated":"desc"}]}',
         )
 
 
-class SuperdeskWorkspace(TaskSet):
+class SuperdeskWorkspace(TaskSetWithAuth):
 
     @task
     def self_profile(self):
-        request_with_auth(
-            self,
+        self.request_with_auth(
             'GET',
             '/users/' + auth['user'],
         )
 
     @task
     def self_activity(self):
-        request_with_auth(
-            self,
+        self.request_with_auth(
             'GET',
             '/activity?embedded={"user":1}'
             "&max_results=50&sort=[('_created',-1)]",
@@ -93,24 +93,21 @@ class SuperdeskWorkspace(TaskSet):
 
     @task
     def list_ingest(self):
-        request_with_auth(
-            self,
+        self.request_with_auth(
             'GET',
             '/ingest',
         )
 
     @task
     def filter_ingest(self):
-        request_with_auth(
-            self,
+        self.request_with_auth(
             'GET',
             '/ingest?source={"query":{"match_all":{}},"size":10,"from":0}',
         )
 
     @task
     def list_notification(self):
-        request_with_auth(
-            self,
+        self.request_with_auth(
             'GET',
             '/notification',
         )
