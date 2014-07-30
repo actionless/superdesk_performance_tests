@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from base64 import b64encode
 import requests
+import json
 
 from locust import HttpLocust, TaskSet, task
 
@@ -32,10 +33,15 @@ auth_token = encode_token(auth['token'])
 
 class TaskSetWithAuth(TaskSet):
 
-    def request_with_auth(self, method, uri, **kwargs):
+    def request_with_auth(self, method, uri, json_data=None, **kwargs):
         url = HOSTNAME + uri
         headers = kwargs.pop('headers', {})
         headers.update({'authorization': auth_token})
+        if json_data:
+            kwargs['data'] = json.dumps(json_data)
+            headers.update({
+                "content-type": "application/json;charset=UTF-8"
+            })
         return self.client.request(
             method,
             url,
@@ -55,11 +61,11 @@ class SuperdeskAuth(TaskSet):
         test_auth = log_in(self.client).json()
         self.client.delete(
             HOSTNAME + '/auth/' + test_auth['_id'],
+            name='/api/auth/{auth_id}',
             headers={
                 'authorization': encode_token(test_auth['token']),
             },
-            verify=False,
-            name='/api/auth/<id>'
+            verify=False
         )
 
 
@@ -113,11 +119,47 @@ class SuperdeskWorkspace(TaskSetWithAuth):
         )
 
 
+class SuperdeskAuthoring(TaskSetWithAuth):
+
+    def create_item(self):
+        self.item_id = self.request_with_auth(
+            'POST',
+            '/archive',
+            json_data={
+                "type": "text",
+            },
+        ).json()['_id']
+
+    def edit_item(self):
+        self.request_with_auth(
+            'PATCH',
+            '/archive/' + self.item_id,
+            name='/api/archive/{item_id}',
+            json_data={
+                "body_html": "<p>new text</p>"
+            },
+        )
+
+    def delete_item(self):
+        self.request_with_auth(
+            'DELETE',
+            '/archive/' + self.item_id,
+            name='/api/archive/{item_id}'
+        )
+
+    @task
+    def authoring_cycle(self):
+        self.create_item()
+        self.edit_item()
+        self.delete_item()
+
+
 class SuperdeskTaskSet(TaskSet):
     tasks = {
         SuperdeskAuth: 1,
         SuperdeskWorkspace: 1,
         SuperdeskArchive: 1,
+        SuperdeskAuthoring: 1,
     }
 
 
