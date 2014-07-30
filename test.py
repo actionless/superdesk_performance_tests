@@ -71,6 +71,14 @@ class SuperdeskWorkspace(TaskSet):
         )
 
     @task
+    def self_activity(self):
+        request_with_auth(
+            self,
+            'GET',
+            """/activity?embedded={"user":1}&max_results=50&sort=[('_created',-1)]""",
+        )
+
+    @task
     def list_ingest(self):
         request_with_auth(
             self,
@@ -83,7 +91,7 @@ class SuperdeskWorkspace(TaskSet):
         request_with_auth(
             self,
             'GET',
-            '/ingest?source=%7B%22query%22:%7B%22match_all%22:%7B%7D%7D,%22size%22:10,%22from%22:0%7D',
+            '/ingest?source={"query":{"match_all":{}},"size":10,"from":0}',
         )
 
     @task
