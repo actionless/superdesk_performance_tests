@@ -56,7 +56,7 @@ class TaskSetWithAuth(TaskSet):
 
 class SuperdeskAuth(TaskSet):
 
-    @task(1)
+    @task
     def log_in_and_out(self):
         test_auth = log_in(self.client).json()
         self.client.delete(
@@ -71,7 +71,7 @@ class SuperdeskAuth(TaskSet):
 
 class SuperdeskArchive(TaskSetWithAuth):
 
-    @task(1)
+    @task
     def archive_page(self):
         self.request_with_auth(
             'GET',
@@ -82,7 +82,7 @@ class SuperdeskArchive(TaskSetWithAuth):
 
 class SuperdeskUserProfile(TaskSetWithAuth):
 
-    @task(1)
+    @task
     def self_profile(self):
         self.request_with_auth(
             'GET',
@@ -93,7 +93,7 @@ class SuperdeskUserProfile(TaskSetWithAuth):
 class SuperdeskWorkspace(TaskSetWithAuth):
     tasks = {SuperdeskUserProfile: 1}
 
-    @task(1)
+    @task
     def self_activity(self):
         self.request_with_auth(
             'GET',
@@ -101,21 +101,21 @@ class SuperdeskWorkspace(TaskSetWithAuth):
             "&max_results=50&sort=[('_created',-1)]",
         )
 
-    @task(1)
+    @task
     def list_ingest(self):
         self.request_with_auth(
             'GET',
             '/ingest',
         )
 
-    @task(1)
+    @task
     def filter_ingest(self):
         self.request_with_auth(
             'GET',
             '/ingest?source={"query":{"match_all":{}},"size":10,"from":0}',
         )
 
-    @task(1)
+    @task
     def list_notification(self):
         self.request_with_auth(
             'GET',
@@ -165,7 +165,7 @@ class SuperdeskAuthoring(TaskSetWithAuth):
             name='/api/archive/{$ITEM_ID}'
         )
 
-    @task(1)
+    @task
     def authoring_cycle(self):
         self.create_item()
         for i in range(20):
