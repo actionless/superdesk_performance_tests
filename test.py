@@ -185,5 +185,5 @@ class SuperdeskTaskSet(TaskSet):
 
 class SuperdeskPerformance(HttpLocust):
     task_set = SuperdeskTaskSet
-    min_wait = 5000
-    max_wait = 9000
+    min_wait = 1
+    max_wait = 10000  # 10 seconds
