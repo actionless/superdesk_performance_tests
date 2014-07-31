@@ -61,7 +61,7 @@ class SuperdeskAuth(TaskSet):
         test_auth = log_in(self.client).json()
         self.client.delete(
             HOSTNAME + '/auth/' + test_auth['_id'],
-            name='/api/auth/{auth_id}',
+            name='/api/auth/{$AUTH_ID}',
             headers={
                 'authorization': encode_token(test_auth['token']),
             },
@@ -80,7 +80,7 @@ class SuperdeskArchive(TaskSetWithAuth):
         )
 
 
-class SuperdeskWorkspace(TaskSetWithAuth):
+class SuperdeskUserProfile(TaskSetWithAuth):
 
     @task
     def self_profile(self):
@@ -88,6 +88,10 @@ class SuperdeskWorkspace(TaskSetWithAuth):
             'GET',
             '/users/' + auth['user'],
         )
+
+
+class SuperdeskWorkspace(TaskSetWithAuth):
+    tasks = {SuperdeskUserProfile: 1}
 
     @task
     def self_activity(self):
@@ -120,6 +124,7 @@ class SuperdeskWorkspace(TaskSetWithAuth):
 
 
 class SuperdeskAuthoring(TaskSetWithAuth):
+    tasks = {SuperdeskUserProfile: 1}
 
     def create_item(self):
         self.item_id = self.request_with_auth(
@@ -134,23 +139,37 @@ class SuperdeskAuthoring(TaskSetWithAuth):
         self.request_with_auth(
             'PATCH',
             '/archive/' + self.item_id,
-            name='/api/archive/{item_id}',
+            name='/api/archive/{$ITEM_ID}',
             json_data={
                 "body_html": "<p>new text</p>"
             },
+        )
+
+    def item_history(self):
+        self.request_with_auth(
+            'GET',
+            '/archive/' + self.item_id,
+            name='/api/archive/{$ITEM_ID}',
+        )
+        self.request_with_auth(
+            'GET',
+            '/archive/' + self.item_id +
+            '?version=all&embedded={"user":1}',
+            name='/api/archive/{$ITEM_ID}?version=all&embedded={"user":1}',
         )
 
     def delete_item(self):
         self.request_with_auth(
             'DELETE',
             '/archive/' + self.item_id,
-            name='/api/archive/{item_id}'
+            name='/api/archive/{$ITEM_ID}'
         )
 
     @task
     def authoring_cycle(self):
         self.create_item()
         self.edit_item()
+        self.item_history()
         self.delete_item()
 
 
