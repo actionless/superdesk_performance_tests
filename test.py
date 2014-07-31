@@ -179,7 +179,7 @@ class SuperdeskTaskSet(TaskSet):
         SuperdeskAuth: 1,
         SuperdeskWorkspace: 10,
         SuperdeskArchive: 100,
-        SuperdeskAuthoring: 25,
+        SuperdeskAuthoring: 50,
     }
 
 
