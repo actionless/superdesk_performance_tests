@@ -135,13 +135,13 @@ class SuperdeskAuthoring(TaskSetWithAuth):
             },
         ).json()['_id']
 
-    def edit_item(self):
+    def edit_item(self, new_text):
         self.request_with_auth(
             'PATCH',
             '/archive/' + self.item_id,
             name='/api/archive/{$ITEM_ID}',
             json_data={
-                "body_html": "<p>new text</p>"
+                "body_html": "<p>{text}</p>".format(text=new_text)
             },
         )
 
@@ -168,7 +168,8 @@ class SuperdeskAuthoring(TaskSetWithAuth):
     @task
     def authoring_cycle(self):
         self.create_item()
-        self.edit_item()
+        for i in range(20):
+            self.edit_item(str(i))
         self.item_history()
         self.delete_item()
 
@@ -176,9 +177,9 @@ class SuperdeskAuthoring(TaskSetWithAuth):
 class SuperdeskTaskSet(TaskSet):
     tasks = {
         SuperdeskAuth: 1,
-        SuperdeskWorkspace: 1,
-        SuperdeskArchive: 1,
-        SuperdeskAuthoring: 1,
+        SuperdeskWorkspace: 10,
+        SuperdeskArchive: 100,
+        SuperdeskAuthoring: 25,
     }
 
 
