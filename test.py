@@ -55,10 +55,13 @@ from subprocess import Popen, PIPE
 def show_top():
     return (
         '<pre>' +
-        ''.join(list(
-            Popen(
-                "top -p $(pgrep -d',' node) -n 1 -b",
-                shell=True, stdin=PIPE, stdout=PIPE
-            ).stdout)) +
+        (lambda output:
+         output if len(output) > 0
+         else "Is node started?")(
+            ''.join(Popen(
+                """top -p "$(pgrep -d',' node)" -n 1 -b""",
+                shell=True, stderr=PIPE, stdout=PIPE
+            ).stdout)
+        ) +
         '</pre>'
     )
