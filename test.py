@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from locust import HttpLocust, TaskSet, task
+from locust import HttpLocust, TaskSet, task, web
 
 URL = 'http://nodejs-dev.sourcefabric.org/'
 
@@ -46,3 +46,19 @@ class SuperdeskPerformance(HttpLocust):
     task_set = LiveBlogTaskSet
     min_wait = 1
     max_wait = 30000  # 10 seconds
+
+
+from subprocess import Popen, PIPE
+
+
+@web.app.route("/top")
+def show_top():
+    return (
+        '<pre>' +
+        ''.join(list(
+            Popen(
+                "top -p $(pgrep -d',' node) -n 1 -b",
+                shell=True, stdin=PIPE, stdout=PIPE
+            ).stdout)) +
+        '</pre>'
+    )
