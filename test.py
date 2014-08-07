@@ -57,7 +57,7 @@ def show_top():
         '<pre>' +
         (lambda output:
          output if len(output) > 0
-         else "Is node started?")(
+         else "Is node running?")(
             ''.join(Popen(
                 """top -p "$(pgrep -d',' node)" -n 1 -b""",
                 shell=True, stderr=PIPE, stdout=PIPE
